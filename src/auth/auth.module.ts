@@ -1,10 +1,20 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import {Module} from '@nestjs/common';
+import {AuthService} from './auth.service';
+import {PassportModule} from '@nestjs/passport';
+import {LocalStrategy} from './local.strategy';
+import {UserModule} from "../user/user.module";
+import {AuthController} from "./auth.controller";
+import {JwtModule} from "@nestjs/jwt";
+import {jwtConstants} from "./jwt/jwt.constants";
+import {JwtStrategy} from "./jwt/jwt.strategy";
 
 @Module({
-  imports: [MongooseModule.forRoot('mongodb+srv://gegham:geghamarus1428@cluster0.06gs4.mongodb.net/quiz?retryWrites=true&w=majority')],
-  controllers: [AppController],
-  providers: [AppService],
+    controllers: [AuthController],
+    imports: [UserModule, PassportModule,
+        JwtModule.register({
+            secret: jwtConstants.secret,
+            signOptions: { expiresIn: '3600s' },
+        }),],
+    providers: [AuthService, LocalStrategy, JwtStrategy],
 })
-export class AppModule {}
+export class AuthModule {}
