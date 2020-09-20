@@ -8,22 +8,27 @@ export class QuestionController {
     }
 
     @Get()
-    async getQuestions() {
+    getQuestions() {
       return this.questionService.getQuestions();
     }
 
     @Post()
-    async createUpdateQuestion(@Body() createQuestionDto: CreateQuestionDto) {
+    createUpdateQuestion(@Body() createQuestionDto: CreateQuestionDto) {
         return this.questionService.createQuestion(createQuestionDto);
     }
 
     @Get(':id')
-    async getQuestion(@Param() params) {
+    getQuestion(@Param() params) {
         return this.questionService.getQuestion(params.id);
     }
 
     @Post(':id')
-    async updateQuestion(@Param() params, @Body() createQuestionDto: CreateQuestionDto) {
+    updateQuestion(@Param() params, @Body() createQuestionDto: CreateQuestionDto) {
         return this.questionService.updateQuestion(params.id, createQuestionDto);
+    }
+
+    @Get('random/:quizId')
+    getRandomQuestion(@Param() params) {
+        return this.questionService.getRandomQuestion(params.quizId);
     }
 }

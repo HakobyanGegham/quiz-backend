@@ -1,15 +1,20 @@
-import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common';
+import {BadRequestException, forwardRef, Inject, Injectable, NotFoundException} from '@nestjs/common';
 import {InjectModel} from "@nestjs/mongoose";
-import {Model} from 'mongoose';
+import {Model, Types} from 'mongoose';
 import DateUtil from "../util/date-util";
 import {Question} from "./question.schema";
 import CreateQuestionDto from "./create-question.dto";
+import {UserQuizService} from "../user-quiz/user-quiz.service";
 
 @Injectable()
 export class QuestionService {
     constructor(@InjectModel(Question.name) private questionModel: Model<Question>,
-                private dateUtil: DateUtil) {
+                @Inject(forwardRef(() => UserQuizService))
+                private readonly userQuizService,
+                private readonly dateUtil: DateUtil
+                ) {
     }
+
 
     /**
      * Returns all questions
@@ -38,6 +43,12 @@ export class QuestionService {
      */
     async createQuestion(createQuestionDto: CreateQuestionDto) {
         try {
+            for (const i in createQuestionDto.options) {
+                if (!createQuestionDto.options.hasOwnProperty(i)) {
+                    continue;
+                }
+                createQuestionDto.options[i]._id = Types.ObjectId();
+            }
             const questionObj = Object.assign(createQuestionDto);
             const date = new Date();
             questionObj.createdAt = this.dateUtil.getTimestampFormattedDate(date);
@@ -45,6 +56,7 @@ export class QuestionService {
             const question = new this.questionModel(questionObj);
             return question.save();
         } catch (e) {
+            console.log(e);
             throw new BadRequestException('Question is not created.')
         }
     }
@@ -73,5 +85,27 @@ export class QuestionService {
         } catch (e) {
             throw new BadRequestException('Question is not updated.')
         }
+    }
+
+    async getRandomQuestion(quizId: string): Promise<Question> {
+        try {
+            const quizQuestionIds = await this.userQuizService.getQuizQuestionIds(quizId);
+            const allQuestionIds = await this.questionModel.find().distinct('_id');
+            const difference = allQuestionIds.filter(x => !quizQuestionIds.includes(x));
+            const randomId = difference[Math.floor((Math.random() * difference.length))];
+            return await this.questionModel.findById(randomId);
+        } catch (e) {
+            throw new NotFoundException('Random question not found.');
+        }
+    }
+
+    findById(questionId: string) {
+        const question  =  this.questionModel.findById(questionId);
+
+        if (!question) {
+            throw new NotFoundException('Question not found.');
+        }
+
+        return question;
     }
 }

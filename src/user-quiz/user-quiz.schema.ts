@@ -1,16 +1,19 @@
 import {Prop, Schema, SchemaFactory} from '@nestjs/mongoose';
 import {Document} from 'mongoose';
+import UserQuizAnswer from "./user-quiz-answer.dto";
 
 @Schema()
 export class UserQuiz extends Document {
     @Prop()
+    _id?: string;
+    @Prop()
     userId: string;
 
     @Prop()
-    isComplete: string;
+    isComplete: boolean;
 
     @Prop({required: true})
-    questions: [];
+    answers: UserQuizAnswer[];
 
     @Prop()
     score: number;

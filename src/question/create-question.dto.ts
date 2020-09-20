@@ -1,4 +1,5 @@
 import {IsNotEmpty} from 'class-validator';
+import CreateOptionDto from "./create-option.dto";
 
 export default class CreateQuestionDto {
     _id?: string;
@@ -7,5 +8,5 @@ export default class CreateQuestionDto {
     @IsNotEmpty()
     score: number;
     @IsNotEmpty()
-    options: [];
+    options: CreateOptionDto[];
 }
