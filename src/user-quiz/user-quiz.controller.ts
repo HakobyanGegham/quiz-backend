@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Param, Post, Req, UseGuards} from '@nestjs/common';
+import {Body, Controller, Get, Param, Post, Query, Req, UseGuards} from '@nestjs/common';
 import {UserQuizService} from "./user-quiz.service";
 import {AuthGuard} from "@nestjs/passport";
 import CreateAnswerDto from "./create-answer.dto";
@@ -27,5 +27,11 @@ export class UserQuizController {
     @Get(':id/result')
     getResult(@Param() params) {
         return this.userQuizService.getResult(params.id);
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Get('best-results')
+    getBestResults(@Query() query) {
+        return this.userQuizService.getBestResults(query.limit);
     }
 }

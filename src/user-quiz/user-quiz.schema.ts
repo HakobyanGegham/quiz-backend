@@ -10,6 +10,9 @@ export class UserQuiz extends Document {
     userId: string;
 
     @Prop()
+    userName: string;
+
+    @Prop()
     isComplete: boolean;
 
     @Prop({required: true})

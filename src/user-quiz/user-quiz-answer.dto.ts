@@ -4,4 +4,5 @@ export default class UserQuizAnswer {
     answerId: string;
     answerContent: string;
     isCorrect: boolean;
+    score: number;
 }

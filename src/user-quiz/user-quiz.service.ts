@@ -6,6 +6,7 @@ import {UserQuiz} from "./user-quiz.schema";
 import CreateAnswerDto from "./create-answer.dto";
 import {QuestionService} from "../question/question.service";
 import UserQuizAnswer from "./user-quiz-answer.dto";
+import {UserService} from "../user/user.service";
 
 @Injectable()
 export class UserQuizService {
@@ -14,6 +15,7 @@ export class UserQuizService {
     constructor(@InjectModel(UserQuiz.name) private quizModel: Model<UserQuiz>,
                 @Inject(forwardRef(() => QuestionService))
                 private readonly questionService: QuestionService,
+                private readonly userService: UserService,
                 private readonly dateUtil: DateUtil) {
     }
 
@@ -24,7 +26,7 @@ export class UserQuizService {
                 return quiz;
             }
 
-            return this.createQuiz(userId);
+            return await this.createQuiz(userId);
         } catch (e) {
             throw new BadRequestException('Can not start quiz.')
         }
@@ -35,14 +37,16 @@ export class UserQuizService {
      *
      * @param userId
      */
-    createQuiz(userId: string) {
+    async createQuiz(userId: string) {
         const date = new Date();
 
+        const user = await this.userService.findById(userId);
         const userQuiz = new this.quizModel({
             _id: Types.ObjectId(),
             createdAt: this.dateUtil.getTimestampFormattedDate(date),
             updatedAt: this.dateUtil.getTimestampFormattedDate(date),
-            userId,
+            userId: user._id,
+            userName: `${user.firstName} ${user.lastName}`,
             score: 0,
             isComplete: false
         });
@@ -82,7 +86,8 @@ export class UserQuizService {
             questionContent: question.content,
             answerId: option._id,
             answerContent: option.content,
-            isCorrect: option.isCorrect
+            isCorrect: option.isCorrect,
+            score: question.score
         };
 
         userQuiz.answers.push(userQuizAnswer);
@@ -106,11 +111,14 @@ export class UserQuizService {
      *
      * @param userQuiz
      */
-    async getNextQuestion(userQuiz: UserQuiz) {
+    async getNextQuestion(userQuiz: Model<UserQuiz>) {
         const isComplete = this.checkIfQuizCompleted(userQuiz);
         let question = null;
         if (!isComplete) {
             question = await this.questionService.getRandomQuestion(userQuiz._id);
+        } else {
+            userQuiz.isComplete = true;
+            userQuiz.save();
         }
 
         return {isComplete, question};
@@ -129,5 +137,9 @@ export class UserQuizService {
         }
 
         return {id: userQuiz._id, score: userQuiz.score};
+    }
+
+    async getBestResults(limit: number) {
+        return await this.quizModel.find({}).sort({score: -1}).limit(+limit);
     }
 }
